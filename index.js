@@ -2,6 +2,7 @@ import express from "express";
 import { connect } from "./db/mongoClient.js";
 import { importData } from "./import.js";
 import fs from "fs/promises";
+import { writeBackupAsync } from "./backupWriterAsync.js";
 
 const app = express();
 app.use(express.json());
@@ -44,6 +45,44 @@ app.post('/import', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+//
+// route backup asynchrone Export complet de la base
+app.post("/backup-async", async (req, res) => { 
+  try {
+
+    // Récupération de toutes les données depuis MongoDB
+    const backupData = {
+      date: new Date().toISOString(),         
+      users: await users.find().toArray(),     // Collection Users
+      projets: await projets.find().toArray(), // Collection Projets
+      taches: await taches.find().toArray()    // Collection Taches
+    };
+
+    
+    const filename = `backup-${Date.now()}.json`;
+
+    // Écriture du backup dans /data/ en mode asynchrone
+    const result = await writeBackupAsync(filename, backupData);
+
+    
+    if (!result.success) {
+      return res.status(500).json({ error: result.error });
+    }
+
+    // Réponse envoyée au client
+    res.json({
+      success: true,
+      message: "Backup asynchrone créé avec succès",
+      file: result.file   // 
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 
 // route  POST /users
 // Créer un nouvel utilisateur dans la base de données
