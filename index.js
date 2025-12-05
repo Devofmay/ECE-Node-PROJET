@@ -95,7 +95,7 @@ app.get('/users/stats/monthly', async (req, res) => {
 
 
 
-/ PUT /taches/:id
+// PUT /taches/:id
 // Modifier une tâche existante (tous les champs modifiables)
 // Params: id (identifiant de la tâche)
 // Body: champs à modifier
