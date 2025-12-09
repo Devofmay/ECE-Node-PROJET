@@ -379,7 +379,7 @@ app.get('/projets/stats/top-taches', async (req, res) => {
           from: 'projets',
           localField: '_id',
           foreignField: '_id',
-          as:
+          as: 'projetDetails'
         }
       },
       { $unwind: '$projetDetails' },
