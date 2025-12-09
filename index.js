@@ -379,7 +379,7 @@ app.get('/projets/stats/top-taches', async (req, res) => {
           from: 'projets',
           localField: '_id',
           foreignField: '_id',
-          as: 'projetDetails'
+          as:
         }
       },
       { $unwind: '$projetDetails' },
@@ -396,4 +396,69 @@ app.get('/projets/stats/top-taches', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+// POST /projets
+// Créer un nouveau projet
+app.post('/projets', async (req, res) => {
+    try {
+        const projet = {
+            ...req.body,
+            created_a: new Date().toISOString()
+        };
+
+        const result = await db.collection('projets').insertOne(projet);
+
+        res.status(201).json({ _id: result.insertedId, ...projet });
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// GET /projets/search?q=
+// Rechercher des projets par mot-clé
+app.get('/projets/search', async (req, res) => {
+    try {
+        const q = req.query.q || "";
+
+        const projets = await db.collection('projets').find({
+            $or: [
+                { titre: { $regex: q, $options: "i" } },
+                { description: { $regex: q, $options: "i" } }
+            ]
+        }).toArray();
+
+        res.json(projets);
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+// GET /projets/stats/daily
+// Statistiques du nombre de projets créés par jour
+app.get('/projets/stats/daily', async (req, res) => {
+    try {
+        const stats = await db.collection('projets').aggregate([
+            {
+                $project: {
+                    day: { $dayOfMonth: { $dateFromString: { dateString: "$created_a" } } },
+                    month: { $month: { $dateFromString: { dateString: "$created_a" } } },
+                    year: { $year: { $dateFromString: { dateString: "$created_a" } } }
+                }
+            },
+            {
+                $group: {
+                    _id: { year: "$year", month: "$month", day: "$day" },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 }
+            }
+        ]).toArray();
+
+        res.json(stats);
+
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 });
