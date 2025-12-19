@@ -87,11 +87,12 @@ app.post("/backup-async", async (req, res) => {
 
 // route  POST /users
 // Créer un nouvel utilisateur dans la base de données
-
 app.post('/users', async (req, res) => {
   try {
+    // Ajout de la date de création
     const user = { ...req.body, created_a: new Date().toISOString() }; 
     const result = await db.collection('users').insertOne(user);
+    // Retour de l'utilisateur avec son ID
     res.status(201).json({ _id: result.insertedId, ...user });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -104,7 +105,9 @@ app.post('/users', async (req, res) => {
 app.get('/users', async (req, res) => {
   try {
     const { role, page = 1, limit = 10 } = req.query;
+    // Construction du filtre optionnel par rôle
     const filter = role ? { role } : {};
+    // Calcul du décalage pour la pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const users = await db.collection('users').find(filter).skip(skip).limit(parseInt(limit)).toArray();
     const total = await db.collection('users').countDocuments(filter);
@@ -115,18 +118,19 @@ app.get('/users', async (req, res) => {
 });
 
  //route GET /users/stats/monthly
-// (pipeline)Agrégation: Statistiques de création des utilisateurs par mois/année
-
+// Statistiques mensuelles de création d'utilisateurs
 app.get('/users/stats/monthly', async (req, res) => {
   try {
     const stats = await db.collection('users').aggregate([
       {
+        // Extraction du mois et de l'année depuis created_a
         $project: {
           month: { $month: { $dateFromString: { dateString: '$created_a' } } },
           year: { $year: { $dateFromString: { dateString: '$created_a' } } }
         }
       },
       {
+        // Regroupement et comptage par période
         $group: {
           _id: { year: '$year', month: '$month' },
           count: { $sum: 1 }
@@ -139,7 +143,6 @@ app.get('/users/stats/monthly', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
 
 
 // PUT /taches/:id

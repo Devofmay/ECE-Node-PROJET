@@ -12,7 +12,7 @@ const DATA_DIR = path.join(__dirname, "data");
 
 export async function writeBackupAsync(filename, jsonObject) {
   try {
-    // Crée automatiquement /data si nécessaire
+    // Créer automatiquement /data si nécessaire
     await fs.mkdir(DATA_DIR, { recursive: true });
 
     const filePath = path.join(DATA_DIR, filename);
